@@ -1,0 +1,33 @@
+# query the client data
+timeperiod: 300   # time in seconds
+datafile: C:\temp\measuerment.json
+debug:
+  # log file e.g. /tmp/emu.log; stderr; stdout
+  # default: stderr
+  file: stderr
+  # flag: (default: standard)
+  #       trace    >> Warning | Info | Error | Fatal | Debug | Trace
+  #       debug    >> Warning | Info | Error | Fatal | Debug
+  #       standard >> Warning | Info | Error | Fatal
+  flag: debug
+
+meter:
+  # key >> name of device
+  wallbox:
+    scalefactor: 100
+    gpio: 17
+  rawwater:
+    scalefactor: 100
+    gpio: 27
+  portablewater:
+    scalefactor: 100
+    gpio: 22
+
+# webserver configuration
+webserver:
+  port: 4010
+  # enable/disable webservices
+  webservices:
+    version: true
+    currentdata: true
+
