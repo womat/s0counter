@@ -45,7 +45,7 @@ func init() {
 	if f := viper.GetString("config"); f != "" {
 		viper.SetConfigFile(f)
 	} else {
-		viper.SetConfigName("powermeter")
+		viper.SetConfigName("s0counter")
 		viper.AddConfigPath(".")
 		viper.AddConfigPath("/opt/womat/")
 	}
@@ -87,10 +87,10 @@ func init() {
 	}
 
 	global.Config.Meter = configFile.Meter
+	global.Config.DataFile = configFile.DataFile
 	global.Config.TimerPeriod = 5 * time.Second
 	if configFile.TimePeriod > 0 {
 		global.Config.TimerPeriod = time.Duration(configFile.TimePeriod) * time.Second
-
 	}
 
 	global.Config.Webserver = configFile.Webserver

@@ -13,7 +13,7 @@ import (
 //
 // VERSION differs from semantic versioning as described in https://semver.org/
 // but we keep the correct syntax.
-//TODO: Versionsnummer auf 1.0.1+2020xxyy anpassen
+//TODO: increase version number to 1.0.1+2020xxyy
 const VERSION = "1.0.0+20201123"
 
 type DebugConf struct {
@@ -22,7 +22,7 @@ type DebugConf struct {
 }
 
 type Meter struct {
-	ScaleFactor int
+	ScaleFactor float64
 	Gpio        int
 }
 

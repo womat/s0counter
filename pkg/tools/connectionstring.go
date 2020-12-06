@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-func GetPortSerialTimeOut(config string) (portName string, baudRate uint, dataBits uint, parity string, stopBit uint, TimeOut time.Duration) {
-	TimeOut = time.Second
+func GetPortSerialTimeOut(config string) (portName string, baudRate uint, dataBits uint, parity string, stopBit uint, timeOut time.Duration) {
+	timeOut = time.Second
 
 	m := make(map[string]string)
 	fields := strings.Fields(config)
@@ -39,18 +39,17 @@ func GetPortSerialTimeOut(config string) (portName string, baudRate uint, dataBi
 
 	for p, v := range m {
 		i, _ := strconv.Atoi(v)
-		switch p {
-		case "Timeout":
-			TimeOut = time.Duration(i) * time.Millisecond
+		if p == "Timeout" {
+			timeOut = time.Duration(i) * time.Millisecond
 		}
 	}
 
 	return
 }
 
-func GetConnectionDeviceIdTimeOut(config string) (connection string, DeviceId byte, TimeOut time.Duration, MaxRetries int) {
-	DeviceId = 1
-	TimeOut = time.Second
+func GetConnectionDeviceIdTimeOut(config string) (connection string, deviceId byte, timeOut time.Duration, maxRetries int) {
+	deviceId = 1
+	timeOut = time.Second
 
 	m := make(map[string]string)
 	fields := strings.Fields(config)
@@ -78,12 +77,12 @@ func GetConnectionDeviceIdTimeOut(config string) (connection string, DeviceId by
 		switch p {
 		case "DeviceId":
 			if i > 0 && i < 248 {
-				DeviceId = byte(i)
+				deviceId = byte(i)
 			}
 		case "Timeout":
-			TimeOut = time.Duration(i) * time.Millisecond
+			timeOut = time.Duration(i) * time.Millisecond
 		case "MaxRetries":
-			MaxRetries = i
+			maxRetries = i
 		}
 	}
 

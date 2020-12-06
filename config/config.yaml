@@ -1,6 +1,6 @@
 # query the client data
 timeperiod: 300   # time in seconds
-datafile: C:\temp\measuerment.json
+datafile: C:\temp\measuerment.yaml
 debug:
   # log file e.g. /tmp/emu.log; stderr; stdout
   # default: stderr
