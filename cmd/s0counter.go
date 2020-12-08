@@ -1,17 +1,17 @@
 package main
 
 import (
-	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-	"s0counter/pkg/rpiemu"
+	"s0counter/pkg/rpi"
 	"s0counter/pkg/tools"
 	"time"
 
 	"s0counter/global"
 	_ "s0counter/pkg/config"
 	"s0counter/pkg/debug"
+	_ "s0counter/pkg/webservice"
 )
 
 type Save struct {
@@ -25,6 +25,8 @@ type SaveAll map[string]struct {
 }
 
 func main() {
+	debug.SetDebug(global.Config.Debug.File, global.Config.Debug.Flag)
+
 	for meterName, meterConfig := range global.Config.Meter {
 		global.AllMeters[meterName] = global.Meter{Config: meterConfig}
 	}
@@ -37,7 +39,7 @@ func main() {
 		return
 	}
 
-	rb, err := rpiemu.Open()
+	rb, err := rpi.Open()
 
 	if err != nil {
 		debug.FatalLog.Printf("can't open gpio: %v\n", err)
@@ -47,66 +49,36 @@ func main() {
 	}
 	defer rb.Close()
 
-	go calcAverage(global.AllMeters, global.Config.DataCollectionInterval)
-
 	for _, meterConfig := range global.Config.Meter {
 		pin := rb.NewPin(meterConfig.Gpio)
 		pin.Input()
 		pin.PullUp()
 		// call handler when pin changes from low to high.
-		// TODO: determine Hw and emu
-		pin.Watch(rpiemu.EdgeRising, handlerEmu)
+		pin.Watch(rpi.EdgeRising, handler)
 		defer pin.Unwatch()
 
-		go func(p *rpiemu.PinEmu) {
-			for range time.Tick(time.Duration(pin.Pin()/2) * time.Second) {
-				p.TestPin(rpiemu.EdgeRising)
-			}
-		}(pin)
+		go testPinEmu(pin)
 	}
 
-	time.Sleep(time.Second)
+	go calcAverage(global.AllMeters, global.Config.DataCollectionInterval)
 	go saveMeasurements(global.Config.DataFile, global.AllMeters, global.Config.BackupInterval)
+
 	// wait for a kill signal
-
-	for range time.Tick(10 * time.Second) {
-		debug.InfoLog.Println(global.AllMeters)
-	}
-
 	select {}
-}
-
-// func handler(pin *gpio.Pin) {
-func handlerEmu(pin *rpiemu.PinEmu) {
-	p := pin.Pin()
-
-	for name, m := range global.AllMeters {
-		// find the measuring device based on the pin configuration
-		if m.Config.Gpio == p {
-			// add current counter & set time stamp
-			debug.DebugLog.Printf("receive an impulse on pin: %v\n", p)
-			// m.Lock()
-			// defer m.Unlock()
-			m.MeasuredValue += 1 / m.Config.ScaleFactor
-			m.S0.Counter++
-			m.S0.TimeStamp = time.Now()
-			fmt.Printf("tick port: %v, counter: %v, measuered value: %v,timestamp: %v\n", p, m.S0.Counter, m.MeasuredValue, m.S0.TimeStamp)
-			global.AllMeters[name] = m
-			return
-		}
-	}
 }
 
 func calcAverage(meters map[string]global.Meter, period time.Duration) {
 	for range time.Tick(period) {
-		for _, m := range meters {
+		debug.DebugLog.Println("calc average values")
+		for name, m := range meters {
 			func() {
 				// m.Lock()
 				// defer m.Unlock()
-
-				m.Throughput = float64(m.S0.Counter-m.S0.LastCounter) / m.Config.ScaleFactor
+				m.Throughput = float64(m.S0.Counter-m.S0.LastCounter) / period.Hours() * m.Config.ScaleFactor
+				debug.DebugLog.Printf("m.Throughput %v, m.S0.Counter %v,m.S0.LastCounter %v, m.Config.ScaleFactor %v, period %v, period.Hours() %v\n", m.Throughput, m.S0.Counter, m.S0.LastCounter, m.Config.ScaleFactor, period, period.Hours())
 				m.S0.LastCounter = m.S0.Counter
 				m.TimeStamp = time.Now()
+				meters[name] = m
 			}()
 		}
 	}
@@ -158,7 +130,8 @@ func LoadMeasurements(fileName string, allMeters map[string]global.Meter) (err e
 
 func saveMeasurements(fileName string, meters map[string]global.Meter, period time.Duration) {
 	for range time.Tick(period) {
-		var s SaveAll
+		debug.DebugLog.Println("save measurements to file")
+		s := SaveAll{}
 
 		for name, m := range meters {
 			func() {

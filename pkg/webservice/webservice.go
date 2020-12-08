@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	debugLog.Println("initialize webservice.go")
+	InitWebService()
 }
 
 func InitWebService() (err error) {
@@ -39,7 +39,7 @@ func httpGetVersion(w http.ResponseWriter, r *http.Request) {
 
 // httpReadCurrentData supplies the data of al meters
 func httpReadCurrentData(w http.ResponseWriter, r *http.Request) {
-	j, err := json.Marshal(global.AllMeters)
+	j, err := json.MarshalIndent(global.AllMeters, "", "  ")
 	if err != nil {
 		errorLog.Println(err)
 		return

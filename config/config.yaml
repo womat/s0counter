@@ -1,11 +1,11 @@
 # datacollectionintervall defines the interval in seconds, in which the average values are calculated
-datacollectionintervall: 300
+datacollectioninterval: 300
 
 # datafile defines the file in which the measured values are saved
 datafile: C:\temp\measuerment.yaml
 
 # backupintervall defines the interval, in which measurements are saved to datafile
-backupintervall: 60
+backupinterval: 313
 
 # debug activates the debug level and the output device/file
 debug:
@@ -24,13 +24,13 @@ debug:
 #    gpio >> S0 input gpio pin
 meter:
   wallbox:
-    scalefactor: 100
+    scalefactor: 0.001
     gpio: 17
   rawwater:
-    scalefactor: 100
+    scalefactor: 0.001
     gpio: 27
   portablewater:
-    scalefactor: 100
+    scalefactor: 0.001
     gpio: 22
 
 # webserver configuration

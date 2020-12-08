@@ -77,7 +77,7 @@ func init() {
 		global.Config.Debug.File = os.Stdout
 	default:
 		if global.Config.Debug.File, err = os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); err != nil {
-			fatalLog.Println(err)
+			log.Println(err)
 			os.Exit(1)
 		}
 	}

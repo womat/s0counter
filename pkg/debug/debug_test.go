@@ -33,7 +33,7 @@ func (ds *dataSourceWrite) Write(data []byte) (int, error) {
 	}
 
 	ds.testCase[ds.count].got = make([]byte, 255)
-	n := copy(ds.testCase[ds.count].got, data[:len(data)])
+	n := copy(ds.testCase[ds.count].got, data[:])
 	ds.testCase[ds.count].got = ds.testCase[ds.count].got[:n]
 	ds.count++
 	return n, nil
@@ -60,7 +60,7 @@ func TestError(t *testing.T) {
 	SetDebug(writer, Error)
 
 	for _, tc := range writer.testCase {
-		Errorlog.Print(tc.pattern)
+		ErrorLog.Print(tc.pattern)
 	}
 
 	for c, tc := range writer.testCase {
@@ -76,7 +76,7 @@ func TestErrorDisabled(t *testing.T) {
 	SetDebug(writer, Info)
 
 	for _, tc := range writer.testCase {
-		Errorlog.Print(tc.pattern)
+		ErrorLog.Print(tc.pattern)
 	}
 
 	for c, tc := range writer.testCase {
@@ -90,35 +90,35 @@ func TestStandard(t *testing.T) {
 	writer := &dataSourceWrite{}
 	writer.AddTestCase("Hello world!", "Hello world!")
 	SetDebug(writer, Standard)
-	Infolog.Print(writer.testCase[0].pattern)
+	InfoLog.Print(writer.testCase[0].pattern)
 	if !bytes.Contains(writer.testCase[0].got, writer.testCase[0].expect) {
 		t.Errorf("test case infolog: expected %v, got %v", string(writer.testCase[0].expect), string(writer.testCase[0].got))
 	}
 
 	writer.Reset()
 	writer.AddTestCase("Hello world!", "Hello world!")
-	Warninglog.Print(writer.testCase[0].pattern)
+	WarningLog.Print(writer.testCase[0].pattern)
 	if !bytes.Contains(writer.testCase[0].got, writer.testCase[0].expect) {
 		t.Errorf("test case warninglog: expected %v, got %v", string(writer.testCase[0].expect), string(writer.testCase[0].got))
 	}
 
 	writer.Reset()
 	writer.AddTestCase("Hello world!", "Hello world!")
-	Errorlog.Print(writer.testCase[0].pattern)
+	ErrorLog.Print(writer.testCase[0].pattern)
 	if !bytes.Contains(writer.testCase[0].got, writer.testCase[0].expect) {
 		t.Errorf("test case errorlog: expected %v, got %v", string(writer.testCase[0].expect), string(writer.testCase[0].got))
 	}
 
 	writer.Reset()
 	writer.AddTestCase("Hello world!", "Hello world!")
-	Debuglog.Print(writer.testCase[0].pattern)
+	DebugLog.Print(writer.testCase[0].pattern)
 	if string(writer.testCase[0].got) != "" {
 		t.Errorf("test case debuglog: expected %v, got %v", "", string(writer.testCase[0].got))
 	}
 
 	writer.Reset()
 	writer.AddTestCase("Hello world!", "Hello world!")
-	Tracelog.Print(writer.testCase[0].pattern)
+	TraceLog.Print(writer.testCase[0].pattern)
 	if string(writer.testCase[0].got) != "" {
 		t.Errorf("test case tracelog: expected %v, got %v", "", string(writer.testCase[0].got))
 	}
@@ -128,35 +128,35 @@ func TestFull(t *testing.T) {
 	writer := &dataSourceWrite{}
 	writer.AddTestCase("Hello world!", "Hello world!")
 	SetDebug(writer, Full)
-	Infolog.Print(writer.testCase[0].pattern)
+	InfoLog.Print(writer.testCase[0].pattern)
 	if !bytes.Contains(writer.testCase[0].got, writer.testCase[0].expect) {
 		t.Errorf("test case infolog: expected %v, got %v", string(writer.testCase[0].expect), string(writer.testCase[0].got))
 	}
 
 	writer.Reset()
 	writer.AddTestCase("Hello world!", "Hello world!")
-	Warninglog.Print(writer.testCase[0].pattern)
+	WarningLog.Print(writer.testCase[0].pattern)
 	if !bytes.Contains(writer.testCase[0].got, writer.testCase[0].expect) {
 		t.Errorf("test case warninglog: expected %v, got %v", string(writer.testCase[0].expect), string(writer.testCase[0].got))
 	}
 
 	writer.Reset()
 	writer.AddTestCase("Hello world!", "Hello world!")
-	Errorlog.Print(writer.testCase[0].pattern)
+	ErrorLog.Print(writer.testCase[0].pattern)
 	if !bytes.Contains(writer.testCase[0].got, writer.testCase[0].expect) {
 		t.Errorf("test case errorlog: expected %v, got %v", string(writer.testCase[0].expect), string(writer.testCase[0].got))
 	}
 
 	writer.Reset()
 	writer.AddTestCase("Hello world!", "Hello world!")
-	Debuglog.Print(writer.testCase[0].pattern)
+	DebugLog.Print(writer.testCase[0].pattern)
 	if !bytes.Contains(writer.testCase[0].got, writer.testCase[0].expect) {
 		t.Errorf("test case debuglog: expected %v, got %v", string(writer.testCase[0].expect), string(writer.testCase[0].got))
 	}
 
 	writer.Reset()
 	writer.AddTestCase("Hello world!", "Hello world!")
-	Tracelog.Print(writer.testCase[0].pattern)
+	TraceLog.Print(writer.testCase[0].pattern)
 	if !bytes.Contains(writer.testCase[0].got, writer.testCase[0].expect) {
 		t.Errorf("test case tracelog: expected %v, got %v", string(writer.testCase[0].expect), string(writer.testCase[0].got))
 	}
