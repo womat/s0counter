@@ -4,7 +4,7 @@ package rpihw
 
 import (
 	"github.com/warthog618/gpio"
-	"s0counter/pkg/rpi"
+	"s0counter/pkg/raspberry"
 )
 
 func Open() (*Rpi, error) {
@@ -26,7 +26,7 @@ func (t *Rpi) NewPin(p int) *Pin {
 	return &(Pin{gpioPin: gpio.NewPin(p)})
 }
 
-func (p *Pin) Watch(edge rpi.Edge, handler interface{}) {
+func (p *Pin) Watch(edge raspberry.Edge, handler interface{}) {
 	if tmp, ok := handler.(func(*Pin)); ok {
 		p.gpioPin.Watch(edge, tmp)
 	}
@@ -36,7 +36,7 @@ func (p *Pin) Unwatch() {
 	p.gpioPin.Unwatch()
 }
 
-func (p *Pin) TestPin(edge rpi.Edge) {
+func (p *Pin) TestPin(edge raspberry.Edge) {
 }
 
 func (p *Pin) Input() {

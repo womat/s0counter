@@ -4,25 +4,21 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-	"s0counter/pkg/rpi"
-	"s0counter/pkg/tools"
 	"time"
 
 	"s0counter/global"
 	_ "s0counter/pkg/config"
 	"s0counter/pkg/debug"
+	"s0counter/pkg/raspberry"
+	"s0counter/pkg/tools"
 	_ "s0counter/pkg/webservice"
 )
 
-type Save struct {
-	MeasuredValue float64   // current measured value, eg kWh,
-	TimeStamp     time.Time // time of last s0 pulse
+type SavedRecord struct {
+	MeterReading float64   // current meter reading (aktueller Zählerstand), eg kWh, l, m³
+	TimeStamp    time.Time // time of last s0 pulse
 }
-
-type SaveAll map[string]struct {
-	MeasuredValue float64   // current measured value, eg kWh,
-	TimeStamp     time.Time // time of last s0 pulse
-}
+type SaveMeters map[string]SavedRecord
 
 func main() {
 	debug.SetDebug(global.Config.Debug.File, global.Config.Debug.Flag)
@@ -31,7 +27,7 @@ func main() {
 		global.AllMeters[meterName] = global.Meter{Config: meterConfig}
 	}
 
-	err := LoadMeasurements(global.Config.DataFile, global.AllMeters)
+	err := loadMeasurements(global.Config.DataFile, global.AllMeters)
 	if err != nil {
 		debug.FatalLog.Printf("can't open data file: %v\n", err)
 		// Exit wit Exit Code 1
@@ -39,22 +35,20 @@ func main() {
 		return
 	}
 
-	rb, err := rpi.Open()
-
-	if err != nil {
+	if err = raspberry.Open(); err != nil {
 		debug.FatalLog.Printf("can't open gpio: %v\n", err)
 		// Exit wit Exit Code 1
 		os.Exit(1)
 		return
 	}
-	defer rb.Close()
+	defer raspberry.Close()
 
 	for _, meterConfig := range global.Config.Meter {
-		pin := rb.NewPin(meterConfig.Gpio)
+		pin := raspberry.NewPin(meterConfig.Gpio)
 		pin.Input()
 		pin.PullUp()
 		// call handler when pin changes from low to high.
-		pin.Watch(rpi.EdgeRising, handler)
+		pin.Watch(raspberry.EdgeRising, handler)
 		defer pin.Unwatch()
 
 		go testPinEmu(pin)
@@ -74,8 +68,7 @@ func calcAverage(meters map[string]global.Meter, period time.Duration) {
 			func() {
 				// m.Lock()
 				// defer m.Unlock()
-				m.Throughput = float64(m.S0.Counter-m.S0.LastCounter) / period.Hours() * m.Config.ScaleFactor
-				debug.DebugLog.Printf("m.Throughput %v, m.S0.Counter %v,m.S0.LastCounter %v, m.Config.ScaleFactor %v, period %v, period.Hours() %v\n", m.Throughput, m.S0.Counter, m.S0.LastCounter, m.Config.ScaleFactor, period, period.Hours())
+				m.FlowPerHour = float64(m.S0.Counter-m.S0.LastCounter) / period.Hours() * m.Config.ScaleFactor
 				m.S0.LastCounter = m.S0.Counter
 				m.TimeStamp = time.Now()
 				meters[name] = m
@@ -84,16 +77,16 @@ func calcAverage(meters map[string]global.Meter, period time.Duration) {
 	}
 }
 
-func LoadMeasurements(fileName string, allMeters map[string]global.Meter) (err error) {
+func loadMeasurements(fileName string, allMeters map[string]global.Meter) (err error) {
 	// if file doesn't exists, create an empty file
 	if !tools.FileExists(fileName) {
-		s := SaveAll{}
+		s := SaveMeters{}
 
 		for name := range allMeters {
-			s[name] = Save{}
+			s[name] = SavedRecord{MeterReading: 0, TimeStamp: time.Time{}}
 		}
 
-		// marshal the byte slice which contains the yaml file's content into SaveAll struct
+		// marshal the byte slice which contains the yaml file's content into SaveMeters struct
 		var data []byte
 		data, err = yaml.Marshal(&s)
 		if err != nil {
@@ -111,15 +104,15 @@ func LoadMeasurements(fileName string, allMeters map[string]global.Meter) (err e
 		return
 	}
 
-	// unmarshal the byte slice which contains the yaml file's content into SaveAll struct
-	s := SaveAll{}
+	// unmarshal the byte slice which contains the yaml file's content into SaveMeters struct
+	s := SaveMeters{}
 	if err = yaml.Unmarshal(data, &s); err != nil {
 		return
 	}
 
 	for name, loadedMeter := range s {
 		if meter, ok := allMeters[name]; ok {
-			meter.MeasuredValue = loadedMeter.MeasuredValue
+			meter.MeterReading = loadedMeter.MeterReading
 			meter.TimeStamp = loadedMeter.TimeStamp
 			allMeters[name] = meter
 		}
@@ -131,21 +124,18 @@ func LoadMeasurements(fileName string, allMeters map[string]global.Meter) (err e
 func saveMeasurements(fileName string, meters map[string]global.Meter, period time.Duration) {
 	for range time.Tick(period) {
 		debug.DebugLog.Println("save measurements to file")
-		s := SaveAll{}
+		s := SaveMeters{}
 
 		for name, m := range meters {
 			func() {
 				// m.Lock()
 				// defer m.Unlock()
 
-				s[name] = Save{
-					MeasuredValue: m.MeasuredValue,
-					TimeStamp:     m.TimeStamp,
-				}
+				s[name] = SavedRecord{MeterReading: m.MeterReading, TimeStamp: m.TimeStamp}
 			}()
 		}
 
-		// marshal the byte slice which contains the yaml file's content into SaveAll struct
+		// marshal the byte slice which contains the yaml file's content into SaveMeters struct
 		data, err := yaml.Marshal(&s)
 		if err != nil {
 			debug.ErrorLog.Printf("saveMeasurements marshal: %v\n", err)
@@ -155,6 +145,23 @@ func saveMeasurements(fileName string, meters map[string]global.Meter, period ti
 		if err := ioutil.WriteFile(fileName, data, 0600); err != nil {
 			debug.ErrorLog.Printf("saveMeasurements write file: %v\n", err)
 			continue
+		}
+	}
+}
+
+func increaseImpulse(pin int) {
+	for name, m := range global.AllMeters {
+		// find the measuring device based on the pin configuration
+		if m.Config.Gpio == pin {
+			// add current counter & set time stamp
+			debug.DebugLog.Printf("receive an impulse on pin: %v\n", pin)
+			// m.Lock()
+			// defer m.Unlock()
+			m.MeterReading += m.Config.ScaleFactor
+			m.S0.Counter++
+			m.S0.TimeStamp = time.Now()
+			global.AllMeters[name] = m
+			return
 		}
 	}
 }

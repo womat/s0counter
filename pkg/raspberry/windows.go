@@ -1,38 +1,34 @@
 // +build windows
 
-package rpi
+package raspberry
 
-type Rpi struct {
-}
-
-type PinEmu struct {
+type P struct {
 	pin     int
 	edge    Edge
-	handler func(*PinEmu)
+	handler func(*P)
 }
 
-func Open() (*Rpi, error) {
-	return &Rpi{}, nil
+func Open() error {
+	return nil
 }
 
-func (rpi *Rpi) Close() {
+func Close() error {
+	return nil
 }
 
-func (rpi *Rpi) NewPin(p int) *PinEmu {
-	return &(PinEmu{pin: p})
+func NewPin(p int) *P {
+	return &(P{pin: p})
 }
 
-func (p *PinEmu) Watch(edge Edge, handler interface{}) {
-	if tmp, ok := handler.(func(*PinEmu)); ok {
-		p.handler = tmp
-		p.edge = edge
-	}
+func (p *P) Watch(edge Edge, handler func(*P)) {
+	p.handler = handler
+	p.edge = edge
 }
 
-func (p *PinEmu) Unwatch() {
+func (p *P) Unwatch() {
 }
 
-func (p *PinEmu) TestPin(edge Edge) {
+func (p *P) TestPin(edge Edge) {
 	switch {
 	case p.edge == EdgeNone, edge == EdgeNone:
 		return
@@ -57,15 +53,15 @@ func (p *PinEmu) TestPin(edge Edge) {
 	}
 }
 
-func (p *PinEmu) Input() {
+func (p *P) Input() {
 }
 
-func (p *PinEmu) PullUp() {
+func (p *P) PullUp() {
 }
 
-func (p *PinEmu) PullDown() {
+func (p *P) PullDown() {
 }
 
-func (p *PinEmu) Pin() int {
+func (p *P) Pin() int {
 	return p.pin
 }

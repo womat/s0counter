@@ -49,11 +49,11 @@ type S0 struct {
 
 type Meter struct {
 	//	sync.Mutex
-	Config        MeterConf
-	TimeStamp     time.Time // time of last throughput calculation
-	MeasuredValue float64   // current measured value, eg kWh,
-	Throughput    float64   // average Value
-	S0            S0
+	Config       MeterConf
+	TimeStamp    time.Time // time of last throughput calculation
+	MeterReading float64   // current meter reading (aktueller Zählerstand), eg kWh, l, m³
+	FlowPerHour  float64   // mass flow rate per hour (= Flow/time(h)), eg kW, l/h, m³/h
+	S0           S0
 }
 
 // Config holds the global configuration
