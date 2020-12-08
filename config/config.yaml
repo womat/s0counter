@@ -1,18 +1,28 @@
-# query the client data
-timeperiod: 300   # time in seconds
+# datacollectionintervall defines the interval in seconds, in which the average values are calculated
+datacollectionintervall: 300
+
+# datafile defines the file in which the measured values are saved
 datafile: C:\temp\measuerment.yaml
+
+# backupintervall defines the interval, in which measurements are saved to datafile
+backupintervall: 60
+
+# debug activates the debug level and the output device/file
 debug:
   # log file e.g. /tmp/emu.log; stderr; stdout
   # default: stderr
   file: stderr
   # flag: (default: standard)
-  #       trace    >> Warning | Info | Error | Fatal | Debug | Trace
-  #       debug    >> Warning | Info | Error | Fatal | Debug
-  #       standard >> Warning | Info | Error | Fatal
+  #       standard (default) >> Warning | Info | Error | Fatal
+  #       trace              >> Warning | Info | Error | Fatal | Debug | Trace
+  #       debug              >> Warning | Info | Error | Fatal | Debug
   flag: debug
 
+# meter configurations
+# key >> name of device
+#    scalefactor >> e.g. scalefactor: 1000 >>  1000pulse 1Kwh
+#    gpio >> S0 input gpio pin
 meter:
-  # key >> name of device
   wallbox:
     scalefactor: 100
     gpio: 17
@@ -25,6 +35,7 @@ meter:
 
 # webserver configuration
 webserver:
+  # port defines the port number
   port: 4010
   # enable/disable webservices
   webservices:

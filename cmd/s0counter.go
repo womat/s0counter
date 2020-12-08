@@ -14,41 +14,22 @@ import (
 	"s0counter/pkg/debug"
 )
 
-type s0value struct {
-	counter     int64     // s0 counter since program start
-	lastCounter int64     // s0 counter at the last average calculation
-	timeStamp   time.Time // time of last s0 pulse
-
-}
-
-type meter struct {
-	//	sync.Mutex
-	Gpio          int       // gpio pin
-	ScaleFactor   float64   // eg. 1000pulse = 1kWh
-	timeStamp     time.Time // time of last throughput calculation
-	measuredValue float64   // current measured value, eg kWh,
-	throughput    float64   //
-	s0            s0value
-}
-
 type Save struct {
 	MeasuredValue float64   // current measured value, eg kWh,
 	TimeStamp     time.Time // time of last s0 pulse
 }
 
-type SaveAll map[string]Save
-
-var AllMeters = map[string]meter{}
+type SaveAll map[string]struct {
+	MeasuredValue float64   // current measured value, eg kWh,
+	TimeStamp     time.Time // time of last s0 pulse
+}
 
 func main() {
 	for meterName, meterConfig := range global.Config.Meter {
-		AllMeters[meterName] = meter{
-			Gpio:        meterConfig.Gpio,
-			ScaleFactor: meterConfig.ScaleFactor,
-		}
+		global.AllMeters[meterName] = global.Meter{Config: meterConfig}
 	}
 
-	err := LoadMeasurements(global.Config.DataFile, AllMeters)
+	err := LoadMeasurements(global.Config.DataFile, global.AllMeters)
 	if err != nil {
 		debug.FatalLog.Printf("can't open data file: %v\n", err)
 		// Exit wit Exit Code 1
@@ -66,7 +47,7 @@ func main() {
 	}
 	defer rb.Close()
 
-	go calcAverage(AllMeters, global.Config.TimerPeriod)
+	go calcAverage(global.AllMeters, global.Config.DataCollectionInterval)
 
 	for _, meterConfig := range global.Config.Meter {
 		pin := rb.NewPin(meterConfig.Gpio)
@@ -85,11 +66,11 @@ func main() {
 	}
 
 	time.Sleep(time.Second)
-	go saveMeasurements(global.Config.DataFile, AllMeters, global.Config.TimerPeriod)
+	go saveMeasurements(global.Config.DataFile, global.AllMeters, global.Config.BackupInterval)
 	// wait for a kill signal
 
 	for range time.Tick(10 * time.Second) {
-		debug.InfoLog.Println(AllMeters)
+		debug.InfoLog.Println(global.AllMeters)
 	}
 
 	select {}
@@ -99,40 +80,39 @@ func main() {
 func handlerEmu(pin *rpiemu.PinEmu) {
 	p := pin.Pin()
 
-	for name, m := range AllMeters {
+	for name, m := range global.AllMeters {
 		// find the measuring device based on the pin configuration
-		if m.Gpio == p {
+		if m.Config.Gpio == p {
 			// add current counter & set time stamp
-			debug.DebugLog.Printf("receive an impule on pin: %v\n", p)
+			debug.DebugLog.Printf("receive an impulse on pin: %v\n", p)
 			// m.Lock()
 			// defer m.Unlock()
-
-			m.measuredValue += 1 / m.ScaleFactor
-			m.s0.counter++
-			m.s0.timeStamp = time.Now()
-			fmt.Printf("tick port: %v, counter: %v, measuered value: %v,timestamp: %v\n", p, m.s0.counter, m.measuredValue, m.s0.timeStamp)
-			AllMeters[name] = m
+			m.MeasuredValue += 1 / m.Config.ScaleFactor
+			m.S0.Counter++
+			m.S0.TimeStamp = time.Now()
+			fmt.Printf("tick port: %v, counter: %v, measuered value: %v,timestamp: %v\n", p, m.S0.Counter, m.MeasuredValue, m.S0.TimeStamp)
+			global.AllMeters[name] = m
 			return
 		}
 	}
 }
 
-func calcAverage(meters map[string]meter, period time.Duration) {
+func calcAverage(meters map[string]global.Meter, period time.Duration) {
 	for range time.Tick(period) {
 		for _, m := range meters {
 			func() {
 				// m.Lock()
 				// defer m.Unlock()
 
-				m.throughput = float64(m.s0.counter-m.s0.lastCounter) / m.ScaleFactor
-				m.s0.lastCounter = m.s0.counter
-				m.timeStamp = time.Now()
+				m.Throughput = float64(m.S0.Counter-m.S0.LastCounter) / m.Config.ScaleFactor
+				m.S0.LastCounter = m.S0.Counter
+				m.TimeStamp = time.Now()
 			}()
 		}
 	}
 }
 
-func LoadMeasurements(fileName string, allMeters map[string]meter) (err error) {
+func LoadMeasurements(fileName string, allMeters map[string]global.Meter) (err error) {
 	// if file doesn't exists, create an empty file
 	if !tools.FileExists(fileName) {
 		s := SaveAll{}
@@ -167,8 +147,8 @@ func LoadMeasurements(fileName string, allMeters map[string]meter) (err error) {
 
 	for name, loadedMeter := range s {
 		if meter, ok := allMeters[name]; ok {
-			meter.measuredValue = loadedMeter.MeasuredValue
-			meter.timeStamp = loadedMeter.TimeStamp
+			meter.MeasuredValue = loadedMeter.MeasuredValue
+			meter.TimeStamp = loadedMeter.TimeStamp
 			allMeters[name] = meter
 		}
 	}
@@ -176,7 +156,7 @@ func LoadMeasurements(fileName string, allMeters map[string]meter) (err error) {
 	return
 }
 
-func saveMeasurements(fileName string, meters map[string]meter, period time.Duration) {
+func saveMeasurements(fileName string, meters map[string]global.Meter, period time.Duration) {
 	for range time.Tick(period) {
 		var s SaveAll
 
@@ -186,8 +166,8 @@ func saveMeasurements(fileName string, meters map[string]meter, period time.Dura
 				// defer m.Unlock()
 
 				s[name] = Save{
-					MeasuredValue: m.measuredValue,
-					TimeStamp:     m.timeStamp,
+					MeasuredValue: m.MeasuredValue,
+					TimeStamp:     m.TimeStamp,
 				}
 			}()
 		}
