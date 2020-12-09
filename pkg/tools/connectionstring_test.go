@@ -1,19 +1,9 @@
 package tools
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 )
-
-func isEqual(a interface{}, b interface{}) bool {
-	expect, _ := json.Marshal(a)
-	got, _ := json.Marshal(b)
-	if string(expect) != string(got) {
-		return false
-	}
-	return true
-}
 
 func TestGetConnectionDeviceIdTimeOut(t *testing.T) {
 	testPattern := []struct {
@@ -30,7 +20,7 @@ func TestGetConnectionDeviceIdTimeOut(t *testing.T) {
 
 	for _, test := range testPattern {
 		c, d, to, r := GetConnectionDeviceIdTimeOut(test.pattern)
-		if !isEqual(test.connection, c) || !isEqual(test.deviceId, d) || !isEqual(test.timeOut, to) || !isEqual(test.maxRetries, r) {
+		if !IsEqual(test.connection, c) || !IsEqual(test.deviceId, d) || !IsEqual(test.timeOut, to) || !IsEqual(test.maxRetries, r) {
 			t.Errorf("expected %v %v %v %v, got %v %v %v %v", test.connection, test.deviceId, test.timeOut, test.maxRetries, c, d, to, r)
 		}
 	}
@@ -52,7 +42,7 @@ func TestPortSerialTimeOut(t *testing.T) {
 
 	for _, test := range testPattern {
 		port, b, d, p, s, to := GetPortSerialTimeOut(test.pattern)
-		if !isEqual(test.port, port) || !isEqual(test.baudRate, b) || !isEqual(test.dataBits, d) || !isEqual(test.parity, p) || !isEqual(test.stopBit, s) || !isEqual(test.timeOut, to) {
+		if !IsEqual(test.port, port) || !IsEqual(test.baudRate, b) || !IsEqual(test.dataBits, d) || !IsEqual(test.parity, p) || !IsEqual(test.stopBit, s) || !IsEqual(test.timeOut, to) {
 			t.Errorf("expected %v %v %v %v %v %v, got %v %v %v %v %v %v", test.port, test.baudRate, test.dataBits, test.parity, test.stopBit, test.timeOut, port, b, d, p, s, to)
 		}
 	}

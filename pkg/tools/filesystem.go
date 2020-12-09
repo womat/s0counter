@@ -3,12 +3,8 @@ package tools
 import "os"
 
 func FileExists(name string) bool {
-	if _, err := os.Stat(name); err != nil {
-		if os.IsNotExist(err) {
-			return false
-		}
-	}
-	return true
+	_, err := os.Stat(name)
+	return !os.IsNotExist(err)
 }
 
 func CreateFile(name string) error {
@@ -16,8 +12,6 @@ func CreateFile(name string) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		fo.Close()
-	}()
+	defer fo.Close()
 	return nil
 }
