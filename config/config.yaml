@@ -1,10 +1,13 @@
 # datacollectionintervall defines the interval in seconds, in which the average values are calculated
+# default 60 seconds
 datacollectioninterval: 300
 
 # datafile defines the file in which the measured values are saved
-datafile: C:\temp\measuerment.yaml
+# default /opt/womat/data/measurement.yaml
+datafile: C:\temp\measurement.yaml
 
 # backupintervall defines the interval, in which measurements are saved to datafile
+# default 60 seconds
 backupinterval: 313
 
 # debug activates the debug level and the output device/file
@@ -35,9 +38,9 @@ meter:
 
 # webserver configuration
 webserver:
-  # port defines the port number
+  # port defines the port number (default: 4000)
   port: 4010
-  # enable/disable webservices
+  # enable/disable webservices (default: disabled)
   webservices:
     version: true
     currentdata: true

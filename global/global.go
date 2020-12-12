@@ -23,13 +23,13 @@ type DebugConf struct {
 }
 
 type MeterConf struct {
-	ScaleFactor float64
-	Gpio        int
+	ScaleFactor float64 `yaml:"scalefactor"`
+	Gpio        int     `yaml:"gpio"`
 }
 
 type WebserverConf struct {
-	Port        int
-	Webservices map[string]bool
+	Port        int             `yaml:"port"`
+	Webservices map[string]bool `yaml:"webservices"`
 }
 
 type Configuration struct {

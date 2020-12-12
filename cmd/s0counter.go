@@ -15,8 +15,8 @@ import (
 )
 
 type SavedRecord struct {
-	MeterReading float64   // current meter reading (aktueller Zählerstand), eg kWh, l, m³
-	TimeStamp    time.Time // time of last s0 pulse
+	MeterReading float64   `yaml:"meterreading"` // current meter reading (aktueller Zählerstand), eg kWh, l, m³
+	TimeStamp    time.Time `yaml:"timestamp"`    // time of last s0 pulse
 }
 type SaveMeters map[string]SavedRecord
 
