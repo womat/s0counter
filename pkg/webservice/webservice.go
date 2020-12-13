@@ -39,7 +39,19 @@ func httpGetVersion(w http.ResponseWriter, r *http.Request) {
 
 // httpReadCurrentData supplies the data of al meters
 func httpReadCurrentData(w http.ResponseWriter, r *http.Request) {
-	j, err := json.MarshalIndent(global.AllMeters, "", "  ")
+	var j []byte
+	var err error
+
+	func() {
+		// Lock all Meters to marshal data
+		for _, m := range global.AllMeters {
+			m.RLock()
+			defer m.RUnlock()
+		}
+
+		j, err = json.MarshalIndent(global.AllMeters, "", "  ")
+	}()
+
 	if err != nil {
 		errorLog.Println(err)
 		return
@@ -47,7 +59,7 @@ func httpReadCurrentData(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	if _, err := w.Write(j); err != nil {
+	if _, err = w.Write(j); err != nil {
 		errorLog.Println(err)
 		return
 	}
