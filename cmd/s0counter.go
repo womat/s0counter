@@ -38,25 +38,36 @@ func main() {
 		return
 	}
 
-	if err = raspberry.Open(); err != nil {
+	chip, err := raspberry.Open()
+
+	if err != nil {
 		debug.FatalLog.Printf("can't open gpio: %v\n", err)
 		os.Exit(1)
 		return
 	}
-	defer raspberry.Close()
+	defer chip.Close()
 
 	for name, meterConfig := range global.Config.Meter {
 		if meter, ok := global.AllMeters[name]; ok {
-			meter.Handler = raspberry.NewPin(meterConfig.Gpio)
-			global.AllMeters[name] = meter
+			/*
+				meter.Handler = raspberry.NewPin(meterConfig.Gpio)
+				global.AllMeters[name] = meter
 
-			meter.Handler.Input()
-			meter.Handler.PullUp()
-			// call handler when pin changes from low to high.
-			if err = meter.Handler.Watch(raspberry.EdgeFalling, handler); err != nil {
+				meter.Handler.Input()
+				meter.Handler.PullUp()
+				// call handler when pin changes from low to high.
+				if err = meter.Handler.Watch(raspberry.EdgeFalling, handler); err != nil {
+					debug.FatalLog.Printf("can't open watcher: %v\n", err)
+				}
+				//defer meter.Handler.Unwatch()
+
+			*/
+			meter.Line, err = chip.Watch(meterConfig.Gpio)
+			if err != nil {
 				debug.FatalLog.Printf("can't open watcher: %v\n", err)
 			}
-			//defer meter.Handler.Unwatch()
+			defer meter.Line.Close()
+			global.AllMeters[name] = meter
 
 			go testPinEmu(meter.Handler)
 		}
@@ -73,10 +84,11 @@ func main() {
 	// wait for am os.Interrupt signal (CTRL C)
 	sig := <-quit
 
-	for _, meter := range global.AllMeters {
-		meter.Handler.Unwatch()
-	}
-
+	/*
+		for _, meter := range global.AllMeters {
+			meter.Handler.Unwatch()
+		}
+	*/
 	debug.InfoLog.Printf("Got %s signal. Aborting...\n", sig)
 	_ = saveMeasurements(global.Config.DataFile, global.AllMeters)
 	os.Exit(1)

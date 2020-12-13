@@ -52,6 +52,7 @@ type S0 struct {
 type Meter struct {
 	sync.RWMutex
 	Handler      *raspberry.P
+	Line         *raspberry.Line
 	Config       MeterConf
 	TimeStamp    time.Time // time of last throughput calculation
 	MeterReading float64   // current meter reading (aktueller Zählerstand), eg kWh, l, m³
