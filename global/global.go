@@ -2,6 +2,8 @@ package global
 
 import (
 	"io"
+	"s0counter/pkg/raspberry"
+	"sync"
 	"time"
 )
 
@@ -48,7 +50,8 @@ type S0 struct {
 }
 
 type Meter struct {
-	//	sync.Mutex
+	sync.RWMutex
+	Handler      *raspberry.P
 	Config       MeterConf
 	TimeStamp    time.Time // time of last throughput calculation
 	MeterReading float64   // current meter reading (aktueller Zählerstand), eg kWh, l, m³
@@ -56,9 +59,12 @@ type Meter struct {
 	S0           S0
 }
 
+// MetersMap must be a pointer to the Meter type, otherwise RWMutex doesn't work!
+type MetersMap = map[string]*Meter
+
 // Config holds the global configuration
 var Config Configuration
-var AllMeters = map[string]Meter{}
+var AllMeters = MetersMap{}
 
 func init() {
 	Config = Configuration{

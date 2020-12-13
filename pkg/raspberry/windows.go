@@ -20,9 +20,10 @@ func NewPin(p int) *P {
 	return &(P{pin: p})
 }
 
-func (p *P) Watch(edge Edge, handler func(*P)) {
+func (p *P) Watch(edge Edge, handler func(*P)) error {
 	p.handler = handler
 	p.edge = edge
+	return nil
 }
 
 func (p *P) Unwatch() {

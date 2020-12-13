@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"s0counter/global"
@@ -44,25 +45,38 @@ func main() {
 	}
 	defer raspberry.Close()
 
-	for _, meterConfig := range global.Config.Meter {
-		pin := raspberry.NewPin(meterConfig.Gpio)
-		pin.Input()
-		pin.PullUp()
-		// call handler when pin changes from low to high.
-		pin.Watch(raspberry.EdgeRising, handler)
-		defer pin.Unwatch()
+	for name, meterConfig := range global.Config.Meter {
+		if meter, ok := global.AllMeters[name]; ok {
+			meter.Handler = raspberry.NewPin(meterConfig.Gpio)
+			global.AllMeters[name] = meter
 
-		go testPinEmu(pin)
+			meter.Handler.Input()
+			meter.Handler.PullUp()
+			// call handler when pin changes from low to high.
+			if err = meter.Handler.Watch(raspberry.EdgeFalling, handler); err != nil {
+				debug.FatalLog.Printf("can't open watcher: %v\n", err)
+			}
+			//defer meter.Handler.Unwatch()
+
+			go testPinEmu(meter.Handler)
+		}
 	}
 
 	go calcFlowPerHour(global.AllMeters, global.Config.DataCollectionInterval)
 	go backupMeasurements(global.Config.DataFile, global.AllMeters, global.Config.BackupInterval)
 
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt)
+	// capture exit signals to ensure resources are released on exit.
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(quit)
 
 	// wait for am os.Interrupt signal (CTRL C)
-	sig := <-c
+	sig := <-quit
+
+	for _, meter := range global.AllMeters {
+		meter.Handler.Unwatch()
+	}
+
 	debug.InfoLog.Printf("Got %s signal. Aborting...\n", sig)
 	_ = saveMeasurements(global.Config.DataFile, global.AllMeters)
 	os.Exit(1)
