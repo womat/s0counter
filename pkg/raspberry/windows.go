@@ -2,67 +2,74 @@
 
 package raspberry
 
-type P struct {
+type Line struct {
 	pin     int
 	edge    Edge
-	handler func(*P)
+	handler func(*Line)
 }
 
-func Open() error {
+type Chip struct {
+}
+
+func Open() (*Chip, error) {
+	return &Chip{}, nil
+}
+
+func (c *Chip) Close() error {
 	return nil
 }
 
-func Close() error {
+func (c *Chip) NewPin(p int) *Line {
+	return &(Line{pin: p})
+}
+
+func (l *Line) Watch(edge Edge, handler func(*Line)) error {
+	l.handler = handler
+	l.edge = edge
 	return nil
 }
 
-func NewPin(p int) *P {
-	return &(P{pin: p})
+func (l *Line) Unwatch() {
 }
 
-func (p *P) Watch(edge Edge, handler func(*P)) error {
-	p.handler = handler
-	p.edge = edge
-	return nil
-}
-
-func (p *P) Unwatch() {
-}
-
-func (p *P) TestPin(edge Edge) {
+func (l *Line) TestPin(edge Edge) {
 	switch {
-	case p.edge == EdgeNone, edge == EdgeNone:
+	case l.edge == EdgeNone, edge == EdgeNone:
 		return
 
 	case edge == EdgeBoth:
 		// if edge is EdgeBoth, handler is called twice
-		if p.edge == EdgeBoth {
-			p.handler(p)
+		if l.edge == EdgeBoth {
+			l.handler(l)
 		}
 
-		if p.edge == EdgeBoth || p.edge == EdgeFalling || p.edge == EdgeRising {
-			p.handler(p)
+		if l.edge == EdgeBoth || l.edge == EdgeFalling || l.edge == EdgeRising {
+			l.handler(l)
 		}
 	case edge == EdgeFalling:
-		if p.edge == EdgeBoth || p.edge == EdgeFalling {
-			p.handler(p)
+		if l.edge == EdgeBoth || l.edge == EdgeFalling {
+			l.handler(l)
 		}
 	case edge == EdgeRising:
-		if p.edge == EdgeBoth || p.edge == EdgeRising {
-			p.handler(p)
+		if l.edge == EdgeBoth || l.edge == EdgeRising {
+			l.handler(l)
 		}
 	}
 }
 
-func (p *P) Input() {
+func (l *Line) Input() {
 }
 
-func (p *P) PullUp() {
+func (l *Line) PullUp() {
 }
 
-func (p *P) PullDown() {
+func (l *Line) PullDown() {
 }
 
-func (p *P) Pin() int {
-	return p.pin
+func (l *Line) Pin() int {
+	return l.pin
+}
+
+func (l *Line) Read() bool {
+	return true
 }

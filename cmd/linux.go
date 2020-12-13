@@ -8,7 +8,7 @@ import (
 	"s0counter/pkg/raspberry"
 )
 
-func testPinEmu(p *raspberry.P) {
+func testPinEmu(l *raspberry.Line) {
 }
 
 func handler(pin *gpio.Pin) {

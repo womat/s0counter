@@ -8,12 +8,12 @@ import (
 	"s0counter/pkg/raspberry"
 )
 
-func testPinEmu(p *raspberry.P) {
-	for range time.Tick(time.Duration(p.Pin()/2) * time.Second) {
-		p.TestPin(raspberry.EdgeRising)
+func testPinEmu(l *raspberry.Line) {
+	for range time.Tick(time.Duration(l.Pin()/2) * time.Second) {
+		l.TestPin(raspberry.EdgeRising)
 	}
 }
 
-func handler(pin *raspberry.P) {
-	increaseImpulse(pin.Pin())
+func handler(l *raspberry.Line) {
+	increaseImpulse(l.Pin())
 }

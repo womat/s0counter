@@ -16,7 +16,7 @@ import (
 // VERSION differs from semantic versioning as described in https://semver.org/
 // but we keep the correct syntax.
 //TODO: increase version number to 1.0.1+2020xxyy
-const VERSION = "1.0.0+20201123"
+const VERSION = "1.0.1+20201213"
 const MODULE = "s0counter"
 
 type DebugConf struct {
@@ -51,7 +51,7 @@ type S0 struct {
 
 type Meter struct {
 	sync.RWMutex
-	Handler      *raspberry.P
+	LineHandler  *raspberry.Line
 	Config       MeterConf
 	TimeStamp    time.Time // time of last throughput calculation
 	MeterReading float64   // current meter reading (aktueller Zählerstand), eg kWh, l, m³

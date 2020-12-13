@@ -1,6 +1,7 @@
 package main
 
-//TODO: move SavedRecord to package global
+// TODO: move type SavedRecord to package global
+// TODO: Use package gpiod https://github.com/warthog618/gpiod
 
 import (
 	"gopkg.in/yaml.v2"
@@ -31,34 +32,36 @@ func main() {
 		global.AllMeters[meterName] = &global.Meter{Config: meterConfig}
 	}
 
-	err := loadMeasurements(global.Config.DataFile, global.AllMeters)
-	if err != nil {
-		debug.FatalLog.Printf("can't open data file: %v\n", err)
+	if err := loadMeasurements(global.Config.DataFile, global.AllMeters); err != nil {
+		debug.ErrorLog.Printf("can't open data file: %v\n", err)
 		os.Exit(1)
 		return
 	}
 
-	if err = raspberry.Open(); err != nil {
-		debug.FatalLog.Printf("can't open gpio: %v\n", err)
+	chip, err := raspberry.Open()
+	if err != nil {
+		debug.ErrorLog.Printf("can't open gpio: %v\n", err)
 		os.Exit(1)
 		return
 	}
-	defer raspberry.Close()
+	defer chip.Close()
 
 	for name, meterConfig := range global.Config.Meter {
 		if meter, ok := global.AllMeters[name]; ok {
-			meter.Handler = raspberry.NewPin(meterConfig.Gpio)
+			meter.LineHandler = chip.NewPin(meterConfig.Gpio)
+			defer global.AllMeters[name].LineHandler.Unwatch()
+
 			global.AllMeters[name] = meter
-
-			meter.Handler.Input()
-			meter.Handler.PullUp()
+			global.AllMeters[name].LineHandler.Input()
+			global.AllMeters[name].LineHandler.PullUp()
 			// call handler when pin changes from low to high.
-			if err = meter.Handler.Watch(raspberry.EdgeFalling, handler); err != nil {
-				debug.FatalLog.Printf("can't open watcher: %v\n", err)
+			if err = global.AllMeters[name].LineHandler.Watch(raspberry.EdgeFalling, handler); err != nil {
+				debug.ErrorLog.Printf("can't open watcher: %v\n", err)
+				return
 			}
-			//defer meter.Handler.Unwatch()
 
-			go testPinEmu(meter.Handler)
+			defer global.AllMeters[name].LineHandler.Unwatch()
+			go testPinEmu(global.AllMeters[name].LineHandler)
 		}
 	}
 
@@ -72,12 +75,11 @@ func main() {
 
 	// wait for am os.Interrupt signal (CTRL C)
 	sig := <-quit
-
-	for _, meter := range global.AllMeters {
-		meter.Handler.Unwatch()
-	}
-
 	debug.InfoLog.Printf("Got %s signal. Aborting...\n", sig)
+	for _, meter := range global.AllMeters {
+		meter.LineHandler.Unwatch()
+	}
+	chip.Close()
 	_ = saveMeasurements(global.Config.DataFile, global.AllMeters)
 	os.Exit(1)
 }
