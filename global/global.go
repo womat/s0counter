@@ -16,7 +16,7 @@ import (
 // VERSION differs from semantic versioning as described in https://semver.org/
 // but we keep the correct syntax.
 //TODO: increase version number to 1.0.1+2020xxyy
-const VERSION = "1.0.3+20201220"
+const VERSION = "1.0.4+20201220"
 const MODULE = "s0counter"
 
 type DebugConf struct {
@@ -27,7 +27,7 @@ type DebugConf struct {
 type MeterConf struct {
 	ScaleFactor float64
 	Gpio        int
-	BounceTimer time.Duration
+	BounceTime  time.Duration
 }
 
 type WebserverConf struct {
@@ -52,7 +52,7 @@ type S0 struct {
 
 type Meter struct {
 	sync.RWMutex
-	LineHandler  *raspberry.Line
+	LineHandler  *raspberry.Line `yaml:"-"`
 	Config       MeterConf
 	TimeStamp    time.Time // time of last throughput calculation
 	MeterReading float64   // current meter reading (aktueller Zählerstand), eg kWh, l, m³

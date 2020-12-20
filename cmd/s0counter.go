@@ -58,7 +58,7 @@ func main() {
 			global.AllMeters[name] = meter
 			global.AllMeters[name].LineHandler.Input()
 			global.AllMeters[name].LineHandler.PullUp()
-			global.AllMeters[name].LineHandler.SetDebounceTimer(meterConfig.BounceTimer)
+			global.AllMeters[name].LineHandler.SetBounceTime(meterConfig.BounceTime)
 			// call handler when pin changes from low to high.
 			if err = global.AllMeters[name].LineHandler.Watch(raspberry.EdgeFalling, handler); err != nil {
 				debug.ErrorLog.Printf("can't open watcher: %v\n", err)

@@ -20,7 +20,7 @@ type yamlDebug struct {
 type MeterConf struct {
 	ScaleFactor float64 `yaml:"scalefactor"`
 	Gpio        int     `yaml:"gpio"`
-	BounceTimer int     `yaml:"bouncetimer"`
+	BounceTime  int     `yaml:"bouncetime"`
 }
 
 type yamlStruct struct {
@@ -71,7 +71,7 @@ func init() {
 		global.Config.Meter[name] = global.MeterConf{
 			ScaleFactor: c.ScaleFactor,
 			Gpio:        c.Gpio,
-			BounceTimer: time.Duration(c.BounceTimer) * time.Millisecond,
+			BounceTime:  time.Duration(c.BounceTime) * time.Millisecond,
 		}
 	}
 }

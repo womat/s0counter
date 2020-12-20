@@ -4,17 +4,19 @@ package raspberry
 
 import (
 	"fmt"
-	"s0counter/pkg/debug"
 	"time"
 )
 
 type Line struct {
-	pin           int
-	edge          Edge
-	debounceTime  time.Duration
-	debounceTimer *time.Timer
-	lastLevel     bool
-	handler       func(*Line)
+	pin  int
+	edge Edge
+	// the bounceTime defines the key bounce time (ms)
+	// the value 0 ignores key bouncing
+	bounceTime time.Duration
+	// while bounceTimer is running, new signal are ignored (suppress key bouncing)
+	bounceTimer *time.Timer
+	lastLevel   bool
+	handler     func(*Line)
 }
 
 type Chip struct {
@@ -34,7 +36,7 @@ func (c *Chip) NewPin(p int) (*Line, error) {
 		return nil, fmt.Errorf("pin %v already used", p)
 	}
 
-	lines[p] = &Line{pin: p, debounceTimer: time.NewTimer(0)}
+	lines[p] = &Line{pin: p, bounceTimer: time.NewTimer(0)}
 	return lines[p], nil
 }
 
@@ -44,13 +46,13 @@ func (l *Line) Watch(edge Edge, handler func(*Line)) error {
 	return nil
 }
 
-func (l *Line) SetDebounceTimer(t time.Duration) *Line {
-	l.debounceTime = t
+func (l *Line) SetBounceTime(t time.Duration) *Line {
+	l.bounceTime = t
 	return l
 }
 
-func (l *Line) DebounceTimer() time.Duration {
-	return l.debounceTime
+func (l *Line) BounceTime() time.Duration {
+	return l.bounceTime
 }
 
 func (l *Line) Unwatch() {
@@ -99,28 +101,33 @@ func (l *Line) Read() bool {
 }
 
 func handler(pin *Line) {
+	// check if map with pin struct exists
 	l, ok := lines[pin.Pin()]
 	if !ok {
 		return
 	}
 
-	if l.debounceTime == 0 {
+	// if debounce is inactive, call handler function and returns
+	if l.bounceTime == 0 {
 		l.lastLevel = l.Read()
 		l.handler(pin)
 		return
 	}
 
 	select {
-	case <-l.debounceTimer.C:
-		l.debounceTimer.Reset(l.debounceTime)
+	case <-l.bounceTimer.C:
+		// if bounce Timer is expired, accept new signals
+		l.bounceTimer.Reset(l.bounceTime)
 	default:
-		debug.DebugLog.Printf("ignore trigger of pin %v\n", l.Pin())
+		// if bounce Timer is still running, ignore single
 		return
 	}
 
 	go func(l *Line) {
-		<-l.debounceTimer.C
-		l.debounceTimer.Reset(0)
+		// wait until bounce Timer is expired and check if the pin has still the correct level
+		// the correct level depends on the edge configuration
+		<-l.bounceTimer.C
+		l.bounceTimer.Reset(0)
 
 		switch l.edge {
 		case EdgeBoth:
