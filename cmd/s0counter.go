@@ -1,5 +1,7 @@
 package main
 
+// https://github.com/stianeikeland/go-rpio
+// https://github.com/davecheney/gpio/blob/a6de66e7e470/examples/watch/watch.go
 // TODO: move type SavedRecord to package global
 // TODO: Use package gpiod https://github.com/warthog618/gpiod
 
