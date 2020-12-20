@@ -23,18 +23,22 @@ debug:
 
 # meter configurations
 # key >> name of device
-#    scalefactor >> e.g. scalefactor: 1000 >>  1000pulse 1Kwh
+#    scalefactor >> e.g. scale factor: 1000 >>  1000pulse 1Kwh
 #    gpio >> S0 input gpio pin
+#    bouncetimer >> time to wait for a stable signal on gpio pin (ms) to get a "clean" value
 meter:
   wallbox:
     scalefactor: 0.001
     gpio: 17
+    bouncetimer: 0
   rawwater:
     scalefactor: 0.001
     gpio: 27
+    bouncetimer: 0
   portablewater:
     scalefactor: 0.001
     gpio: 22
+    bouncetimer: 0
 
 # webserver configuration
 webserver:

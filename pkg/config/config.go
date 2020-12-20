@@ -17,14 +17,19 @@ type yamlDebug struct {
 	File string `yaml:"file"`
 	Flag string `yaml:"flag"`
 }
+type MeterConf struct {
+	ScaleFactor float64 `yaml:"scalefactor"`
+	Gpio        int     `yaml:"gpio"`
+	BounceTimer int     `yaml:"bouncetimer"`
+}
 
 type yamlStruct struct {
-	DataCollectionInterval int                         `yaml:"datacollectioninterval"`
-	DataFile               string                      `yaml:"datafile"`
-	BackupInterval         int                         `yaml:"backupinterval"`
-	Debug                  yamlDebug                   `yaml:"debug"`
-	Meter                  map[string]global.MeterConf `yaml:"meter"`
-	Webserver              global.WebserverConf        `yaml:"webserver"`
+	DataCollectionInterval int                  `yaml:"datacollectioninterval"`
+	DataFile               string               `yaml:"datafile"`
+	BackupInterval         int                  `yaml:"backupinterval"`
+	Debug                  yamlDebug            `yaml:"debug"`
+	Meter                  map[string]MeterConf `yaml:"meter"`
+	Webserver              global.WebserverConf `yaml:"webserver"`
 }
 
 func init() {
@@ -40,7 +45,7 @@ func init() {
 		DataFile:               "/opt/womat/data/measurement.yaml",
 		BackupInterval:         defaultInterval,
 		Debug:                  yamlDebug{File: "stderr", Flag: "standard"},
-		Meter:                  map[string]global.MeterConf{},
+		Meter:                  map[string]MeterConf{},
 		Webserver:              global.WebserverConf{Port: 4000, Webservices: map[string]bool{"version": false, "currentdata": false}},
 	}
 
@@ -62,7 +67,13 @@ func init() {
 	global.Config.BackupInterval = time.Duration(configFile.BackupInterval) * time.Second
 	global.Config.DataCollectionInterval = time.Duration(configFile.DataCollectionInterval) * time.Second
 	global.Config.Webserver = configFile.Webserver
-	global.Config.Meter = configFile.Meter
+	for name, c := range configFile.Meter {
+		global.Config.Meter[name] = global.MeterConf{
+			ScaleFactor: c.ScaleFactor,
+			Gpio:        c.Gpio,
+			BounceTimer: time.Duration(c.BounceTimer) * time.Millisecond,
+		}
+	}
 }
 
 func getDebugConfig(flags flagm, d yamlDebug) (c global.DebugConf, err error) {

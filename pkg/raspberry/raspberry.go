@@ -17,6 +17,12 @@ const (
 	EdgeBoth Edge = "both"
 )
 
+var lines []*Line
+
+func init() {
+	lines = []*Line{}
+}
+
 /*
 func (pin *Line) Polling(edge Edge, ) {
 	lastState := pin.gpioPin.Read()

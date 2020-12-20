@@ -50,12 +50,15 @@ func main() {
 
 	for name, meterConfig := range global.Config.Meter {
 		if meter, ok := global.AllMeters[name]; ok {
-			meter.LineHandler = chip.NewPin(meterConfig.Gpio)
-			defer global.AllMeters[name].LineHandler.Unwatch()
+			if meter.LineHandler, err = chip.NewPin(meterConfig.Gpio); err != nil {
+				debug.ErrorLog.Printf("can't open pin: %v\n", err)
+				return
+			}
 
 			global.AllMeters[name] = meter
 			global.AllMeters[name].LineHandler.Input()
 			global.AllMeters[name].LineHandler.PullUp()
+			global.AllMeters[name].LineHandler.SetDebounceTimer(meterConfig.BounceTimer)
 			// call handler when pin changes from low to high.
 			if err = global.AllMeters[name].LineHandler.Watch(raspberry.EdgeFalling, handler); err != nil {
 				debug.ErrorLog.Printf("can't open watcher: %v\n", err)

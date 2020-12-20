@@ -10,7 +10,7 @@ import (
 
 func testPinEmu(l *raspberry.Line) {
 	for range time.Tick(time.Duration(l.Pin()/2) * time.Second) {
-		l.TestPin(raspberry.EdgeRising)
+		l.TestPin(raspberry.EdgeFalling)
 	}
 }
 
