@@ -4,6 +4,7 @@ package raspberry
 
 import (
 	"fmt"
+	"s0counter/pkg/debug"
 	"time"
 )
 
@@ -20,7 +21,7 @@ type Chip struct {
 }
 
 func Open() (*Chip, error) {
-	lines = []*Line{}
+	lines = map[int]*Line{}
 	return &Chip{}, nil
 }
 
@@ -29,15 +30,12 @@ func (c *Chip) Close() error {
 }
 
 func (c *Chip) NewPin(p int) (*Line, error) {
-	for _, l := range lines {
-		if l.pin == p {
-			return nil, fmt.Errorf("pin %v already used", p)
-		}
+	if _, ok := lines[p]; ok {
+		return nil, fmt.Errorf("pin %v already used", p)
 	}
 
-	l := Line{pin: p, debounceTimer: time.NewTimer(0)}
-	lines = append(lines, &l)
-	return &l, nil
+	lines[p] = &Line{pin: p, debounceTimer: time.NewTimer(0)}
+	return lines[p], nil
 }
 
 func (l *Line) Watch(edge Edge, handler func(*Line)) error {
@@ -101,44 +99,45 @@ func (l *Line) Read() bool {
 }
 
 func handler(pin *Line) {
-	for _, l := range lines {
-		if l == pin {
-			if l.debounceTime == 0 {
+	l, ok := lines[pin.Pin()]
+	if !ok {
+		return
+	}
+
+	if l.debounceTime == 0 {
+		l.lastLevel = l.Read()
+		l.handler(pin)
+		return
+	}
+
+	select {
+	case <-l.debounceTimer.C:
+		l.debounceTimer.Reset(l.debounceTime)
+	default:
+		debug.DebugLog.Printf("ignore trigger of pin %v\n", l.Pin())
+		return
+	}
+
+	go func(l *Line) {
+		<-l.debounceTimer.C
+		l.debounceTimer.Reset(0)
+
+		switch l.edge {
+		case EdgeBoth:
+			if l.Read() != l.lastLevel {
 				l.lastLevel = l.Read()
 				l.handler(pin)
-				return
 			}
-
-			select {
-			case <-l.debounceTimer.C:
-				l.debounceTimer.Reset(l.debounceTime)
-			default:
-				return
+		case EdgeFalling:
+			if !l.Read() {
+				l.lastLevel = l.Read()
+				l.handler(pin)
 			}
-
-			go func(p *Line, l Line) {
-				<-l.debounceTimer.C
-				l.debounceTimer.Reset(0)
-
-				switch l.edge {
-				case EdgeBoth:
-					if p.Read() != l.lastLevel {
-						l.lastLevel = l.Read()
-						l.handler(pin)
-					}
-				case EdgeFalling:
-					if !p.Read() {
-						l.lastLevel = l.Read()
-						l.handler(pin)
-					}
-				case EdgeRising:
-					if p.Read() {
-						l.lastLevel = l.Read()
-						l.handler(pin)
-					}
-				}
-			}(pin, *l)
-			return
+		case EdgeRising:
+			if l.Read() {
+				l.lastLevel = l.Read()
+				l.handler(pin)
+			}
 		}
-	}
+	}(l)
 }

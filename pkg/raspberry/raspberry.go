@@ -17,10 +17,10 @@ const (
 	EdgeBoth Edge = "both"
 )
 
-var lines []*Line
+var lines map[int]*Line
 
 func init() {
-	lines = []*Line{}
+	lines = map[int]*Line{}
 }
 
 /*

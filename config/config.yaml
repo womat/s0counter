@@ -30,15 +30,15 @@ meter:
   wallbox:
     scalefactor: 0.001
     gpio: 17
-    bouncetimer: 0
+    bouncetimer: 10000
   rawwater:
     scalefactor: 0.001
     gpio: 27
-    bouncetimer: 0
+    bouncetimer: 10
   portablewater:
     scalefactor: 0.001
     gpio: 22
-    bouncetimer: 0
+    bouncetimer: 10
 
 # webserver configuration
 webserver:
