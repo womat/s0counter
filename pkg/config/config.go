@@ -18,9 +18,12 @@ type yamlDebug struct {
 	Flag string `yaml:"flag"`
 }
 type MeterConf struct {
-	ScaleFactor float64 `yaml:"scalefactor"`
-	Gpio        int     `yaml:"gpio"`
-	BounceTime  int     `yaml:"bouncetime"`
+	ScaleFactor     float64 `yaml:"scalefactor"`
+	Gpio            int     `yaml:"gpio"`
+	BounceTime      int     `yaml:"bouncetime"`
+	Unit            string  `yaml:"unit"`
+	UnitFlow        string  `yaml:"unitflow"`
+	ScaleFactorFlow float64 `yaml:"scalefactorflow"`
 }
 
 type yamlStruct struct {
@@ -69,9 +72,12 @@ func init() {
 	global.Config.Webserver = configFile.Webserver
 	for name, c := range configFile.Meter {
 		global.Config.Meter[name] = global.MeterConf{
-			ScaleFactor: c.ScaleFactor,
-			Gpio:        c.Gpio,
-			BounceTime:  time.Duration(c.BounceTime) * time.Millisecond,
+			ScaleFactor:     c.ScaleFactor,
+			ScaleFactorFlow: c.ScaleFactorFlow,
+			Unit:            c.Unit,
+			UnitFlow:        c.UnitFlow,
+			Gpio:            c.Gpio,
+			BounceTime:      time.Duration(c.BounceTime) * time.Millisecond,
 		}
 	}
 }

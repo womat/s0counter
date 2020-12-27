@@ -2,7 +2,6 @@ package main
 
 // https://github.com/stianeikeland/go-rpio
 // https://github.com/davecheney/gpio/blob/a6de66e7e470/examples/watch/watch.go
-// TODO: move type SavedRecord to package global
 // TODO: Use package gpiod https://github.com/warthog618/gpiod
 
 import (
@@ -31,7 +30,7 @@ func main() {
 	debug.SetDebug(global.Config.Debug.File, global.Config.Debug.Flag)
 
 	for meterName, meterConfig := range global.Config.Meter {
-		global.AllMeters[meterName] = &global.Meter{Config: meterConfig}
+		global.AllMeters[meterName] = &global.Meter{Config: meterConfig, UnitMeterReading: meterConfig.Unit, UnitFlow: meterConfig.UnitFlow}
 	}
 
 	if err := loadMeasurements(global.Config.DataFile, global.AllMeters); err != nil {
@@ -70,7 +69,7 @@ func main() {
 		}
 	}
 
-	go calcFlowPerHour(global.AllMeters, global.Config.DataCollectionInterval)
+	go calcFlow(global.AllMeters, global.Config.DataCollectionInterval)
 	go backupMeasurements(global.Config.DataFile, global.AllMeters, global.Config.BackupInterval)
 
 	// capture exit signals to ensure resources are released on exit.
@@ -89,7 +88,7 @@ func main() {
 	os.Exit(1)
 }
 
-func calcFlowPerHour(meters global.MetersMap, period time.Duration) {
+func calcFlow(meters global.MetersMap, period time.Duration) {
 	for range time.Tick(period) {
 		debug.DebugLog.Println("calc average values")
 
@@ -97,7 +96,7 @@ func calcFlowPerHour(meters global.MetersMap, period time.Duration) {
 			func() {
 				m.Lock()
 				defer m.Unlock()
-				m.FlowPerHour = float64(m.S0.Counter-m.S0.LastCounter) / period.Hours() * m.Config.ScaleFactor
+				m.Flow = float64(m.S0.Counter-m.S0.LastCounter) / period.Hours() * m.Config.ScaleFactor * m.Config.ScaleFactorFlow
 				m.S0.LastCounter = m.S0.Counter
 				m.TimeStamp = time.Now()
 			}()

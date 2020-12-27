@@ -23,22 +23,34 @@ debug:
 
 # meter configurations
 # key >> name of device
-#    scalefactor >> e.g. scale factor: 1000 >>  1000pulse 1Kwh
 #    gpio >> S0 input gpio pin
 #    bouncetime >> time to wait for a stable signal on gpio pin (ms) to get a "clean" level (suppress key bouncing)
+#    unit >> unit of meter eg "kWh, m³, ..."
+#    scalefactor >> e.g. scale factor: 1000 >>  1000pulse 1kWh
+#    unitflow >> unit of flow (unit/t) eg "kW, l/h, ..."
+#    scalefactorflow >>scale factor of flow, based on hour: eg 1000: m³/h >> l/h,  0.27777778 m3/h >> l/s
 meter:
   wallbox:
-    scalefactor: 0.001
     gpio: 17
     bouncetime: 10000
-  rawwater:
+    unit: "kW"
     scalefactor: 0.001
+    unitflow: "kW/h"
+    scalefactorflow: 1
+  rawwater:
     gpio: 27
     bouncetime: 10
-  portablewater:
+    unit: "m³"
     scalefactor: 0.001
+    unitflow: "l/h"
+    scalefactorflow: 0.001
+  portablewater:
     gpio: 22
     bouncetime: 10
+    unit: "m³"
+    scalefactor: 1000
+    unitflow: "l/h"
+    scalefactorflow: 0.2777777778
 
 # webserver configuration
 webserver:
@@ -48,4 +60,3 @@ webserver:
   webservices:
     version: true
     currentdata: true
-
