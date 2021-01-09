@@ -12,11 +12,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/womat/debug"
+	"github.com/womat/tools"
+
 	"s0counter/global"
 	_ "s0counter/pkg/config"
-	"s0counter/pkg/debug"
 	"s0counter/pkg/raspberry"
-	"s0counter/pkg/tools"
 	_ "s0counter/pkg/webservice"
 )
 

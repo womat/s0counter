@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/womat/debug"
+
 	"s0counter/global"
 )
 
@@ -17,7 +19,7 @@ func InitWebService() (err error) {
 		"version":     httpGetVersion,
 		"currentdata": httpReadCurrentData,
 	} {
-		if ok, set := global.Config.Webserver.Webservices[pattern]; ok && set {
+		if set, ok := global.Config.Webserver.Webservices[pattern]; ok && set {
 			http.HandleFunc("/"+pattern, f)
 		}
 	}
@@ -32,7 +34,7 @@ func httpGetVersion(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	if _, err := w.Write([]byte(global.VERSION)); err != nil {
-		errorLog.Println(err)
+		debug.ErrorLog.Println(err)
 		return
 	}
 }
@@ -53,14 +55,14 @@ func httpReadCurrentData(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	if err != nil {
-		errorLog.Println(err)
+		debug.ErrorLog.Println(err)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	if _, err = w.Write(j); err != nil {
-		errorLog.Println(err)
+		debug.ErrorLog.Println(err)
 		return
 	}
 }
