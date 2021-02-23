@@ -6,7 +6,6 @@ package main
 
 import (
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -121,13 +120,13 @@ func loadMeasurements(fileName string, allMeters global.MetersMap) (err error) {
 			return
 		}
 
-		if err = ioutil.WriteFile(fileName, data, 0600); err != nil {
+		if err = os.WriteFile(fileName, data, 0600); err != nil {
 			return
 		}
 	}
 
 	// read the yaml file as a byte array.
-	data, err := ioutil.ReadFile(fileName)
+	data, err := os.ReadFile(fileName)
 	if err != nil {
 		return
 	}
@@ -178,7 +177,7 @@ func saveMeasurements(fileName string, meters global.MetersMap) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(fileName, data, 0600); err != nil {
+	if err := os.WriteFile(fileName, data, 0600); err != nil {
 		debug.ErrorLog.Printf("backupMeasurements write file: %v\n", err)
 		return err
 	}
