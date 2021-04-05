@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/womat/debug"
+
 	"s0counter/global"
 )
 
@@ -99,12 +101,12 @@ func getDebugConfig(flags flagm, d yamlDebug) (c global.DebugConf, err error) {
 
 	// defines Debug section of global.Config
 	switch flag {
-	case "trace":
-		c.Flag = Full
+	case "trace", "full":
+		c.Flag = debug.Full
 	case "debug":
-		c.Flag = Warning | Info | Error | Fatal | Debug
+		c.Flag = debug.Warning | debug.Info | debug.Error | debug.Fatal | debug.Debug
 	case "standard":
-		c.Flag = Standard
+		c.Flag = debug.Standard
 	}
 
 	switch file {

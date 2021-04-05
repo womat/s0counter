@@ -16,7 +16,7 @@ import (
 // VERSION differs from semantic versioning as described in https://semver.org/
 // but we keep the correct syntax.
 //TODO: increase version number to 1.0.1+2020xxyy
-const VERSION = "1.0.5+20201227"
+const VERSION = "1.0.6+20210504"
 const MODULE = "s0counter"
 
 type DebugConf struct {
