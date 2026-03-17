@@ -22,7 +22,6 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/womat/golib/mqtt"
 	"github.com/womat/s0meter/app/service/s0meters"
@@ -108,14 +107,12 @@ func (app *App) Run() (*App, error) {
 
 		app.mqtt = mqttHandler
 		// periodically calculate the gauge- and counter-values for each meter and send the results over MQTT
-		interval := time.Duration(app.config.MQTT.PublishInterval) * time.Second
-		slog.Info("Starting periodic MQTT publishing", "interval", interval, "broker", broker)
-		app.meters.StartPeriodicPublish(app.ctx, interval, app.mqtt)
+		slog.Info("Starting periodic MQTT publishing", "interval", app.config.MQTT.PublishInterval, "broker", broker)
+		app.meters.StartPeriodicPublish(app.ctx, app.config.MQTT.PublishInterval, app.mqtt)
 	}
 
-	interval := time.Duration(app.config.BackupInterval) * time.Second
-	slog.Info("Starting periodic meter data backup", "interval", interval, "file", app.config.DataFile)
-	app.meters.StartPeriodicBackup(app.ctx, interval, app.config.DataFile)
+	slog.Info("Starting periodic meter data backup", "interval", app.config.BackupInterval, "file", app.config.DataFile)
+	app.meters.StartPeriodicBackup(app.ctx, app.config.BackupInterval, app.config.DataFile)
 
 	// handle the OS signals
 	app.HandleOSSignals()

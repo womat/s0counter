@@ -12,7 +12,7 @@ import (
 
 // StartPeriodicPublish runs a periodic publishing loop in a separate goroutine.
 //
-// This function publishes all meter readings every DataCollectionInterval seconds.
+// This function publishes all meter readings every DataCollectionInterval.
 // The loop stops when the provided context is cancelled.
 func (h *Handler) StartPeriodicPublish(ctx context.Context, interval time.Duration, mqttHandler *mqtt.Handler) {
 	ticker := time.NewTicker(interval)

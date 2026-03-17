@@ -135,8 +135,8 @@ webserver:
 # File where counters are persisted
 dataFile: /opt/s0meter/data/s0meter.yaml
 
-# Interval in seconds for saving counters to dataFile
-backupInterval: 60
+# Interval as Go duration string (e.g. 60s) for saving counters to dataFile
+backupInterval: 60s
 
 # =============================================================================
 # MQTT configuration (disabled when connection is empty)
@@ -148,8 +148,8 @@ mqtt:
   # Retain messages on the broker
   retained: false
 
-  # Publish interval in seconds
-  publishInterval: 10
+  # Publish interval as Go duration string (e.g. 10s)
+  publishInterval: 10s
 
 # =============================================================================
 # S0 Meter configurations
@@ -157,7 +157,7 @@ mqtt:
 meter:
   wallbox:
     gpio: 17
-    bounceTime: 1
+    debounceTime: 1ms
     counterUnit: "kWh"
     counterPulsesPerUnit: 1000
     counterPrecision: 2
@@ -168,7 +168,7 @@ meter:
 
   greywater:
     gpio: 27
-    bounceTime: 1
+    debounceTime: 1ms
     counterUnit: "l"
     counterPulsesPerUnit: 1
     counterPrecision: 0
@@ -179,7 +179,7 @@ meter:
 
   drinkingwater:
     gpio: 22
-    bounceTime: 1
+    debounceTime: 1ms
     counterUnit: "m³"
     counterPulsesPerUnit: 1000
     counterPrecision: 3
@@ -191,17 +191,17 @@ meter:
 
 ### Meter Configuration Reference
 
-| Field                  | Type     | Description                                                                      |
-|------------------------|----------|----------------------------------------------------------------------------------|
-| `gpio`                 | int      | GPIO pin number for S0 pulse input                                               |
-| `bounceTime`           | int (ms) | Debounce time in milliseconds to suppress signal noise                           |
-| `counterUnit`          | string   | Unit of the total counter (e.g. `kWh`, `m³`, `l`)                                |
-| `gaugeUnit`            | string   | Unit of the flow rate (e.g. `kW`, `l/h`, `l/s`)                                  |
-| `counterPulsesPerUnit` | float    | Meter constant (Zählerkonstante): pulses per counterUnit                         |
-| `gaugeScale`           | float    | Scale factor applied to the gauge value (e.g. `0.2777778` to convert m³/h → l/s) |
-| `counterPrecision`     | int      | Number of decimal places for the counter value                                   |
-| `gaugePrecision`       | int      | Number of decimal places for the gauge value                                     |
-| `mqttTopic`            | string   | MQTT topic to publish to (empty = not published)                                 |
+| Field                  | Type   | Description                                                                      |
+|------------------------|--------|----------------------------------------------------------------------------------|
+| `gpio`                 | int    | GPIO pin number for S0 pulse input                                               |
+| `debounceTime`         | string | Debounce time as Go duration string (e.g. 1ms) to suppress signal noise          |
+| `counterUnit`          | string | Unit of the total counter (e.g. `kWh`, `m³`, `l`)                                |
+| `gaugeUnit`            | string | Unit of the flow rate (e.g. `kW`, `l/h`, `l/s`)                                  |
+| `counterPulsesPerUnit` | float  | Meter constant (Zählerkonstante): pulses per counterUnit                         |
+| `gaugeScale`           | float  | Scale factor applied to the gauge value (e.g. `0.2777778` to convert m³/h → l/s) |
+| `counterPrecision`     | int    | Number of decimal places for the counter value                                   |
+| `gaugePrecision`       | int    | Number of decimal places for the gauge value                                     |
+| `mqttTopic`            | string | MQTT topic to publish to (empty = not published)                                 |
 
 ---
 

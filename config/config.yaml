@@ -55,8 +55,8 @@ webserver:
 # File where counters are persisted
 dataFile: /opt/s0meter/data/s0meter.yaml
 
-# Interval in seconds for saving counters to dataFile
-backupInterval: 60
+# Interval as Go duration string (e.g. 60s) for saving counters to dataFile
+backupInterval: 60s
 
 # =============================================================================
 # MQTT configuration (disabled when connection is empty)
@@ -68,14 +68,14 @@ mqtt:
   # Retain messages on the broker
   retained: false
 
-  # Publish interval in seconds
-  publishInterval: 10
+  # Publish interval as Go duration string (e.g. 10s)
+  publishInterval: 10s
 
 # =============================================================================
 # S0 Meter configurations
 # =============================================================================
 # gpio                 - GPIO pin for S0 pulse input
-# bounceTime           - Debounce time in ms (suppress signal noise)
+# debounceTime         - Debounce time as Go duration string (e.g. 1ms) to suppress signal noise
 # counterPulsesPerUnit - Meter constant (Zählerkonstante): pulses per counterUnit
 #                        (see meter datasheet, e.g. 1000 imp/kWh)
 # counterUnit          - Unit of the total counter (e.g. kWh, m³, l)
@@ -88,7 +88,7 @@ mqtt:
 meter:
   wallbox:
     gpio: 17
-    bounceTime: 1
+    debounceTime: 1ms
     counterUnit: "Wh"
     counterPulsesPerUnit: 1
     counterPrecision: 2
@@ -99,7 +99,7 @@ meter:
 
   greywater:
     gpio: 27
-    bounceTime: 1
+    debounceTime: 1ms
     counterUnit: "l"
     counterPulsesPerUnit: 1
     counterPrecision: 0
@@ -110,7 +110,7 @@ meter:
 
   drinkingwater:
     gpio: 22
-    bounceTime: 1
+    debounceTime: 1ms
     counterUnit: "m³"
     counterPulsesPerUnit: 1000
     counterPrecision: 3
